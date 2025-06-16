@@ -14,7 +14,6 @@ import (
 )
 
 func main() {
-	// Database configuration
 	dbConfig := database.Config{
 		Host:     getEnv("DB_HOST", "localhost"),
 		Port:     5432,
@@ -24,20 +23,16 @@ func main() {
 		SSLMode:  getEnv("DB_SSLMODE", "disable"),
 	}
 
-	// Connect to database
 	db, err := database.NewConnection(dbConfig)
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
 	defer db.Close()
 
-	// Initialize handlers
 	todoHandler := handlers.NewTodoHandler(db)
 
-	// Setup routes
 	mux := http.NewServeMux()
 
-	// Handle /todos (collection operations)
 	mux.HandleFunc("/todos", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodGet:
@@ -49,7 +44,6 @@ func main() {
 		}
 	})
 
-	// Handle /todos/{id} (individual todo operations)
 	mux.HandleFunc("/todos/", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodGet:
@@ -63,13 +57,10 @@ func main() {
 		}
 	})
 
-	// Add CORS middleware
 	handler := corsMiddleware(mux)
 
-	// Add logging middleware
 	handler = loggingMiddleware(handler)
 
-	// Server configuration
 	port := getEnv("PORT", "8080")
 	server := &http.Server{
 		Addr:         ":" + port,
@@ -79,7 +70,6 @@ func main() {
 		IdleTimeout:  60 * time.Second,
 	}
 
-	// Start server in a goroutine
 	go func() {
 		log.Printf("Server starting on port %s", port)
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
@@ -87,13 +77,11 @@ func main() {
 		}
 	}()
 
-	// Wait for interrupt signal to gracefully shutdown
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 	log.Println("Server shutting down...")
 
-	// Graceful shutdown with timeout
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
@@ -104,7 +92,6 @@ func main() {
 	log.Println("Server exited")
 }
 
-// getEnv gets environment variable with fallback
 func getEnv(key, fallback string) string {
 	if value, exists := os.LookupEnv(key); exists {
 		return value
@@ -112,7 +99,6 @@ func getEnv(key, fallback string) string {
 	return fallback
 }
 
-// corsMiddleware adds CORS headers
 func corsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -128,7 +114,6 @@ func corsMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-// loggingMiddleware logs HTTP requests
 func loggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
