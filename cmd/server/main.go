@@ -30,6 +30,7 @@ func main() {
 	defer db.Close()
 
 	todoHandler := handlers.NewTodoHandler(db)
+	usersHandler := handlers.NewUserHandler(db)
 
 	mux := http.NewServeMux()
 
@@ -56,6 +57,9 @@ func main() {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
 	})
+
+	mux.HandleFunc("/signup", usersHandler.Signup)
+	mux.HandleFunc("/login", usersHandler.Login)
 
 	handler := corsMiddleware(mux)
 
